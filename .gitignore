@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Database (ไม่ commit ไฟล์ข้อมูลจริง)
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Environment (ห้าม commit ไฟล์ที่มี secret)
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
+static/uploads/

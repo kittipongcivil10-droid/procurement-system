@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO System — Enterprise Procurement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="loginOverlay" style="display:flex;position:fixed;inset:0;background:linear-gradient(135deg,#0a0f1e 0%,#121a3a 40%,#1a1145 100%);z-index:9999;align-items:center;justify-content:center;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%, rgba(56,112,255,0.12) 0%, transparent 60%),radial-gradient(ellipse at 70% 80%, rgba(108,92,231,0.08) 0%, transparent 50%);"></div>
+    <div style="position:relative;background:rgba(255,255,255,0.97);border-radius:24px;padding:44px 40px 36px;max-width:420px;width:92%;box-shadow:0 32px 80px rgba(0,0,0,0.3);backdrop-filter:blur(20px);">
+        <div style="text-align:center;margin-bottom:32px;">
+            <div style="width:72px;height:72px;background:linear-gradient(135deg,#3870ff,#6c5ce7);border-radius:18px;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:26px;margin-bottom:16px;box-shadow:0 8px 24px rgba(56,112,255,0.3);">P</div>
+            <h2 style="font-size:24px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;">PRO System</h2>
+            <p style="color:#64748b;font-size:13px;margin-top:4px;">ระบบจัดซื้อจัดจ้าง — เข้าสู่ระบบเพื่อใช้งาน</p>
+        </div>
+
+        <div id="loginError" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#dc2626;text-align:center;"></div>
+
+        <div style="margin-bottom:16px;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">👤 ชื่อผู้ใช้ (Username)</label>
+            <input type="text" id="loginUsername" placeholder="เช่น admin, procurement, engineer1" autocomplete="username" style="width:100%;padding:13px 16px;border:1.5px solid #e2e8f0;border-radius:12px;font-family:var(--font-th);font-size:15px;background:#fff;color:#0f172a;transition:all 0.2s;outline:none;" onfocus="this.style.borderColor='#3870ff';this.style.boxShadow='0 0 0 3px rgba(56,112,255,0.1)'" onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow=''" onkeydown="if(event.key==='Enter'){document.getElementById('loginPassword').focus();}">
+        </div>
+
+        <div style="margin-bottom:8px;">
+            <label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">🔒 รหัสผ่าน (Password)</label>
+            <div style="position:relative;">
+                <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:13px 16px;padding-right:44px;border:1.5px solid #e2e8f0;border-radius:12px;font-family:var(--font-th);font-size:15px;background:#fff;color:#0f172a;transition:all 0.2s;outline:none;" onfocus="this.style.borderColor='#3870ff';this.style.boxShadow='0 0 0 3px rgba(56,112,255,0.1)'" onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow=''" onkeydown="if(event.key==='Enter'){doLogin();}">
+                <button type="button" onclick="togglePasswordVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;padding:6px;color:#94a3b8;" id="togglePwdBtn">👁️</button>
+            </div>
+        </div>
+
+        <div style="margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="loginRemember" checked style="width:16px;height:16px;accent-color:#3870ff;">
+            <label for="loginRemember" style="font-size:12px;color:#64748b;cursor:pointer;">จดจำการเข้าสู่ระบบ</label>
+        </div>
+
+        <button onclick="doLogin()" style="width:100%;padding:15px;background:linear-gradient(135deg,#3870ff,#5b4de7);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-th);transition:all 0.2s;box-shadow:0 4px 16px rgba(56,112,255,0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(56,112,255,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(56,112,255,0.3)'" id="loginBtn">เข้าสู่ระบบ</button>
+
+        <button onclick="quickAdminLogin()" style="width:100%;margin-top:10px;padding:13px;background:#f8fafc;color:#2563eb;border:1.5px solid #c7d2fe;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-th);">
+            เข้าใช้งานด้วย Admin
+        </button>
+
+        <div style="margin-top:16px;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:#0f172a;">บัญชีเริ่มต้น</div>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                Username: <b>admin</b> / Password: <b>admin123</b>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h1><span class="logo-mark">P</span> <span>PRO System</span></h1>
+        <p>Procurement Management</p>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">เมนูหลัก</div>
+        <div class="nav-item active" data-section="dashboard">
+            <div class="nav-icon">📊</div>
+            <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-section="pr">
+            <div class="nav-icon">📝</div>
+            <span>Purchase Request</span>
+            
+        </div>
+        <div class="nav-item" data-section="po">
+            <div class="nav-icon">📋</div>
+            <span>Purchase Order</span>
+        </div>
+        <div class="nav-item" data-section="compare">
+            <div class="nav-icon">⚖️</div>
+            <span>เปรียบเทียบราคา</span>
+        </div>
+        <div class="nav-item" data-section="grn">
+            <div class="nav-icon">📦</div>
+            <span>รับสินค้า</span>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">จัดการ</div>
+        <div class="nav-item" data-section="projects">
+            <div class="nav-icon">📂</div>
+            <span>โครงการ</span>
+        </div>
+        <div class="nav-item" data-section="budget">
+            <div class="nav-icon">💰</div>
+            <span>งบประมาณ</span>
+        </div>
+        <div class="nav-item" data-section="vendors">
+            <div class="nav-icon">🏢</div>
+            <span>ผู้ขาย</span>
+            
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">องค์กร</div>
+        <div class="nav-item" data-section="departments">
+            <div class="nav-icon">🏛️</div>
+            <span>แผนก</span>
+        </div>
+        <div class="nav-item" data-section="users">
+            <div class="nav-icon">👤</div>
+            <span>ผู้ใช้งาน</span>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-label">ระบบ</div>
+        <div class="nav-item" data-section="reports">
+            <div class="nav-icon">📈</div>
+            <span>รายงาน</span>
+        </div>
+        <div class="nav-item" data-section="settings">
+            <div class="nav-icon">⚙️</div>
+            <span>ตั้งค่า</span>
+        </div>
+    </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main">
+    <!-- Top bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <h2 id="topbarTitle">Dashboard</h2>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-search">
+                <span>🔍</span>
+                <input type="text" placeholder="ค้นหา PR, PO, โครงการ...">
+            </div>
+            <div id="currentUserDisplay" style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="showUserMenu()">
+                <div style="text-align:right;"><div id="currentUserName" style="font-size:13px;font-weight:600;"></div><div id="currentUserRole" style="font-size:10px;color:var(--text-muted);"></div></div>
+                <div class="avatar" id="currentUserAvatar">?</div>
+            </div>
+            <input type="file" id="userPhotoInput" accept="image/*" style="display:none;" onchange="handleUserPhoto(this)">
+        </div>
+    </div>
+
+    <div class="page-content">
+
+        <!-- ══════════════ DASHBOARD ══════════════ -->
+        <div id="dashboard" class="content-section active">
+            <!-- Welcome Banner -->
+            <div id="dashWelcome" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 40%,#3870ff 80%,#6c5ce7 100%);border-radius:20px;padding:32px 36px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden;">
+                <div style="position:absolute;right:-30px;top:-30px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
+                <div style="position:absolute;right:80px;bottom:-50px;width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+                <div style="position:absolute;left:40%;top:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.06),transparent);"></div>
+                <div style="position:relative;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+                    <div>
+                        <div style="font-size:12px;opacity:0.6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;" id="dashGreeting">สวัสดีตอนเช้า</div>
+                        <div style="font-size:26px;font-weight:800;margin-bottom:2px;letter-spacing:-0.5px;" id="dashWelcomeName">ยินดีต้อนรับ</div>
+                        <div style="font-size:13px;opacity:0.6;" id="dashWelcomeRole">ระบบจัดซื้อจัดจ้าง PRO System</div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dashQuickActions">
+                        <button onclick="openPRModal()" style="padding:10px 20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-th);transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.12)';this.style.transform=''">📝 สร้าง PR</button>
+                        <button onclick="go('po')" style="padding:10px 20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-th);transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.12)';this.style.transform=''">📋 จัดการ PO</button>
+                        <button onclick="go('reports')" style="padding:10px 20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-th);transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.12)';this.style.transform=''">📈 รายงาน</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-row" id="dashStats"></div>
+
+            <!-- Main Grid: PR Table + Budget + Activity -->
+            <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;margin-top:4px;">
+                <!-- PR Table -->
+                <div class="table-card" style="margin-bottom:0;">
+                    <div class="table-card-header">
+                        <div class="table-card-title">📝 PR ล่าสุด</div>
+                        <button class="btn btn-primary" onclick="go('pr')" style="font-size:12px;padding:6px 14px;">ดูทั้งหมด →</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>เลขที่</th>
+                                <th>หัวข้อ</th>
+                                <th>ผู้ขอ</th>
+                                <th>มูลค่า</th>
+                                <th>อนุมัติ</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashPRBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Right Panel -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- Budget Donut -->
+                    <div class="table-card" style="margin-bottom:0;padding:22px;">
+                        <div class="table-card-title" style="margin-bottom:16px;">💰 สรุปงบประมาณ</div>
+                        <div id="dashBudgetChart" style="text-align:center;"></div>
+                    </div>
+
+                    <!-- Activity -->
+                    <div class="table-card" style="margin-bottom:0;padding:22px;flex:1;">
+                        <div class="table-card-title" style="margin-bottom:12px;">🕐 กิจกรรมล่าสุด</div>
+                        <div id="dashActivity" style="font-size:13px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Projects + PO -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;">
+                <div class="table-card" style="margin-bottom:0;padding:22px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <div class="table-card-title" style="margin:0;">🚧 โครงการดำเนินการ</div>
+                        <button class="btn btn-ghost" onclick="go('projects')" style="font-size:11px;padding:4px 10px;">ดูทั้งหมด</button>
+                    </div>
+                    <div id="dashProjects"></div>
+                </div>
+                <div class="table-card" style="margin-bottom:0;padding:22px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <div class="table-card-title" style="margin:0;">📋 PO ล่าสุด</div>
+                        <button class="btn btn-ghost" onclick="go('po')" style="font-size:11px;padding:4px 10px;">ดูทั้งหมด</button>
+                    </div>
+                    <div id="dashPOList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ PR ══════════════ -->
+        <div id="pr" class="content-section">
+            <div class="page-header">
+                <h2>Purchase Request (PR)</h2>
+                <p>จัดการใบขอซื้อทั้งหมด</p>
+            </div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">รายการ PR ทั้งหมด</div>
+                    <button class="btn btn-primary" onclick="openPRModal()">+ สร้าง PR ใหม่</button>
+                </div>
+                <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>เลขที่ PR</th>
+                            <th>หัวข้อ</th>
+                            <th>ผู้ขอ</th>
+                            <th>วันที่สร้าง</th>
+                            <th>มูลค่า</th>
+                            <th>ลำดับอนุมัติ</th>
+                            <th>สถานะ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prTableBody">
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ PO ══════════════ -->
+        <div id="po" class="content-section">
+            <div class="page-header">
+                <h2>Purchase Order (PO)</h2>
+                <p>จัดการใบสั่งซื้อ — สร้าง PO ได้เฉพาะ PR ที่อนุมัติครบทุกลำดับแล้วเท่านั้น</p>
+            </div>
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">รายการ PO ทั้งหมด</div>
+                    <button class="btn btn-primary" onclick="if(!canCurrentUserCreatePO()){toast('⚠️ เฉพาะฝ่ายจัดซื้อหรือ MD เท่านั้น');return;}openCreatePO()">+ สร้าง PO จาก PR ที่อนุมัติแล้ว</button>
+                </div>
+                <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>เลขที่ PO</th>
+                            <th>อ้างอิง PR</th>
+                            <th>ผู้ขาย</th>
+                            <th>มูลค่า</th>
+                            <th>วันครบกำหนด</th>
+                            <th>สถานะ</th>
+                            <th>การจ่ายเงิน</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="poTableBody">
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ GRN (Goods Receipt) ══════════════ -->
+        <div id="grn" class="content-section">
+            <div class="page-header">
+                <h2>📦 รับสินค้า / Goods Receipt Note (GRN)</h2>
+                <p>บันทึกการรับสินค้าตาม PO และตรวจสอบคุณภาพ</p>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card pending">
+                    <div class="stat-top"><div class="stat-label">PO รอรับสินค้า</div><div class="stat-icon">📦</div></div>
+                    <div class="stat-value" id="grnPendingStat">0</div><div class="stat-sub">รอการจัดส่ง</div>
+                </div>
+                <div class="stat-card approved">
+                    <div class="stat-top"><div class="stat-label">รับครบแล้ว</div><div class="stat-icon">✅</div></div>
+                    <div class="stat-value" id="grnDoneStat">0</div><div class="stat-sub">ตรวจรับเรียบร้อย</div>
+                </div>
+                <div class="stat-card budget">
+                    <div class="stat-top"><div class="stat-label">รับบางส่วน</div><div class="stat-icon">📊</div></div>
+                    <div class="stat-value" id="grnPartialStat">0</div><div class="stat-sub">รอรับเพิ่ม</div>
+                </div>
+                <div class="stat-card rejected">
+                    <div class="stat-top"><div class="stat-label">ตีกลับ/ไม่ผ่าน</div><div class="stat-icon">🔄</div></div>
+                    <div class="stat-value" id="grnRejectedStat">0</div><div class="stat-sub">คืนผู้ขาย</div>
+                </div>
+            </div>
+
+            <!-- PO waiting for goods receipt -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">📋 PO ที่รอรับสินค้า</div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>เลขที่ PO</th><th>ผู้ขาย</th><th>รายการ</th><th>มูลค่า</th><th>กำหนดส่ง</th><th>สถานะ</th><th>รับสินค้า</th></tr></thead>
+                    <tbody id="grnPendingBody"></tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- GRN History -->
+            <div class="table-card" style="margin-top:24px;">
+                <div class="table-card-header">
+                    <div class="table-card-title">📦 ประวัติการรับสินค้า</div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>เลขที่ GRN</th><th>อ้างอิง PO</th><th>ผู้ขาย</th><th>วันที่รับ</th><th>มูลค่า</th><th>ผู้รับ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                    <tbody id="grnHistoryBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ PROJECTS ══════════════ -->
+        <div id="projects" class="content-section">
+            <div class="page-header">
+                <h2>🚧 โครงการ / Projects</h2>
+                <p>จัดการโครงการก่อสร้าง — เชื่อมข้อมูลกับแผนก</p>
+            </div>
+            <div class="stats-row" id="projStats"></div>
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">รายการโครงการ</div>
+                    <button class="btn btn-primary" onclick="openProjectModal()">+ เพิ่มโครงการใหม่</button>
+                </div>
+                <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr><th>รหัส</th><th>ชื่อโครงการ</th><th>แผนกรับผิดชอบ</th><th>ผู้จัดการ</th><th>งบประมาณ</th><th>ใช้ไป</th><th>คงเหลือ</th><th>ระยะเวลา</th><th>สถานะ</th><th>จัดการ</th></tr>
+                    </thead>
+                    <tbody id="projectsTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ BUDGET ══════════════ -->
+        <div id="budget" class="content-section">
+            <div class="page-header">
+                <h2>💰 งบประมาณ / Budget</h2>
+                <p>จัดการงบประมาณแยกตามแผนก — เชื่อมข้อมูลจากแผนกอัตโนมัติ</p>
+            </div>
+            <div class="stats-row" id="budgetStats"></div>
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">งบประมาณแยกตามแผนก</div>
+                </div>
+                <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>แผนก</th><th>งบประมาณ</th><th>ใช้ไป</th><th>คงเหลือ</th><th>การใช้งบ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                    <tbody id="budgetTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ VENDORS (Enhanced) ══════════════ -->
+        <div id="vendors" class="content-section">
+            <div class="page-header">
+                <h2>🏢 ผู้ขาย / Vendors</h2>
+                <p>จัดการข้อมูลผู้ขายและคู่ค้า</p>
+            </div>
+            <div class="stats-row" id="vendorStats"></div>
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">รายชื่อผู้ขาย</div>
+                    <button class="btn btn-primary" onclick="openModal('vendorModal')">+ เพิ่มผู้ขายใหม่</button>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>รหัส</th><th>ชื่อบริษัท</th><th>เลขผู้เสียภาษี</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>อีเมล</th><th>จัดการ</th></tr></thead>
+                    <tbody id="vendorsTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ DEPARTMENTS ══════════════ -->
+        <div id="departments" class="content-section">
+            <div class="page-header">
+                <h2>🏗️ จัดการแผนก / Departments</h2>
+                <p>โครงสร้างองค์กร — บริษัทก่อสร้างและวิศวกรรม</p>
+            </div>
+
+            <div class="stats-row" id="deptStats"></div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">โครงสร้างแผนก</div>
+                    <button class="btn btn-primary" onclick="openDeptModal()">+ เพิ่มแผนกใหม่</button>
+                </div>
+                <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>รหัส</th><th>แผนก / ฝ่าย</th><th>ชื่อภาษาอังกฤษ</th><th>ประเภท</th><th>Cost Center</th><th>อีเมล</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                    <tbody id="deptTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ USERS ══════════════ -->
+        <div id="users" class="content-section">
+            <div class="page-header">
+                <h2>👤 จัดการผู้ใช้งาน / Users</h2>
+                <p>จัดการบัญชีผู้ใช้ สิทธิ์การเข้าถึง และรหัสผ่าน</p>
+            </div>
+
+            <div class="stats-row" id="userStats"></div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">รายชื่อผู้ใช้งาน</div>
+                    <button class="btn btn-primary" onclick="openUserModal()">+ เพิ่มผู้ใช้ใหม่</button>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>Username</th><th>แผนก</th><th>ตำแหน่ง</th><th>สิทธิ์</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+        <!-- ══════════════ PRICE COMPARISON ══════════════ -->
+        <div id="compare" class="content-section">
+            <div class="page-header">
+                <h2>⚖️ เปรียบเทียบราคา / Price Comparison</h2>
+                <p>เปรียบเทียบราคาจากผู้ขายหลายราย ก่อนตัดสินใจสร้าง PO — เชื่อมกับ PR ที่อนุมัติแล้ว</p>
+            </div>
+
+            <div class="stats-row" id="compareStats"></div>
+
+            <!-- Create new comparison -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">📋 สร้างใบเปรียบเทียบราคา</div>
+                    <button class="btn btn-primary" onclick="openCompareModal()">+ สร้างใบเปรียบเทียบราคาใหม่</button>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>เลขที่</th><th>อ้างอิง PR</th><th>รายการ</th><th>ผู้ขายที่เปรียบเทียบ</th><th>ราคาต่ำสุด</th><th>ผู้ขายที่เลือก</th><th>วันที่</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                    <tbody id="compareTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ COMPARE MODAL ══════════════ -->
+        <div id="compareModal" class="modal-overlay">
+            <div class="modal-box" style="max-width:1100px;">
+                <div class="modal-top">
+                    <h3>⚖️ สร้างใบเปรียบเทียบราคา</h3>
+                    <button class="modal-close" onclick="closeModal('compareModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-banner">
+                        <strong>📋 เลือก PR ที่รออนุมัติหรืออนุมัติแล้ว → เพิ่มใบเสนอราคาจากผู้ขาย 2-3 ราย → เลือกรายที่ดีที่สุด</strong>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">📌 ขั้นตอนที่ 1 — เลือก PR</div>
+                        <div class="form-group">
+                            <label>เลือก PR <span class="req">*</span></label>
+                            <select id="comparePRSelect" onchange="onComparePRSelect()">
+                                <option value="">-- เลือก PR --</option>
+                            </select>
+                        </div>
+                        <div id="comparePRItems" style="display:none;margin-top:12px;"></div>
+                    </div>
+
+                    <div id="compareStep2" style="display:none;">
+                        <div class="form-section">
+                            <div class="form-section-title">🏢 ขั้นตอนที่ 2 — ใบเสนอราคาจากผู้ขาย</div>
+                            <div id="compareVendorQuotes"></div>
+                            <button class="btn btn-ghost" style="margin-top:12px;" onclick="addCompareVendor()">+ เพิ่มผู้ขายอีกราย</button>
+                        </div>
+
+                        <div class="form-section" id="compareSummarySection" style="display:none;">
+                            <div class="form-section-title">📊 สรุปเปรียบเทียบ</div>
+                            <div id="compareSummary"></div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title">📝 ความเห็น</div>
+                            <div class="form-group"><textarea id="compareNotes" rows="2" placeholder="เหตุผลในการเลือกผู้ขาย เช่น ราคาดีที่สุด, ส่งเร็ว, คุณภาพดี..."></textarea></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" onclick="closeModal('compareModal')">ยกเลิก</button>
+                    <button class="btn btn-primary" id="compareSubmitBtn" onclick="submitCompare()" disabled>💾 บันทึกใบเปรียบเทียบราคา</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ COMPARE DETAIL MODAL ══════════════ -->
+
+        <!-- ══════════════ REPORTS ══════════════ -->
+        <div id="reports" class="content-section">
+            <div class="page-header">
+                <h2>รายงาน / Export PDF</h2>
+                <p>สร้างแบบฟอร์ม PR / PO มาตรฐาน เพื่อ Export เป็น PDF</p>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card budget">
+                    <div class="stat-top"><div class="stat-label">การใช้งบรวม</div><div class="stat-icon">💰</div></div>
+                    <div class="stat-value">฿28.5M</div><div class="stat-sub">57% จากงบ ฿50M</div>
+                </div>
+                <div class="stat-card approved">
+                    <div class="stat-top"><div class="stat-label">PR อนุมัติ (เดือนนี้)</div><div class="stat-icon">✅</div></div>
+                    <div class="stat-value">45</div><div class="stat-sub up">↑ 18% จากเดือนที่แล้ว</div>
+                </div>
+                <div class="stat-card approved">
+                    <div class="stat-top"><div class="stat-label">PO ออกแล้ว</div><div class="stat-icon">📋</div></div>
+                    <div class="stat-value">38</div><div class="stat-sub up">↑ 15% จากเดือนที่แล้ว</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="stat-top"><div class="stat-label">เวลาอนุมัติเฉลี่ย</div><div class="stat-icon">⏱️</div></div>
+                    <div class="stat-value">2.3 วัน</div><div class="stat-sub up">↓ 0.5 วัน</div>
+                </div>
+            </div>
+
+            <!-- Export PR -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">📝 Export แบบฟอร์ม PR (Purchase Request)</div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>เลขที่ PR</th><th>หัวข้อ</th><th>ผู้ขอ</th><th>มูลค่า</th><th>สถานะ</th><th>Export</th></tr></thead>
+                    <tbody id="exportPRBody"></tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Export PO -->
+            <div class="table-card" style="margin-top:24px;">
+                <div class="table-card-header">
+                    <div class="table-card-title">📋 Export แบบฟอร์ม PO (Purchase Order)</div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>เลขที่ PO</th><th>อ้างอิง PR</th><th>ผู้ขาย</th><th>มูลค่า</th><th>สถานะ</th><th>Export</th></tr></thead>
+                    <tbody id="exportPOBody"></tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- PDF Preview -->
+            <div id="pdfPreviewArea" style="display:none;margin-top:24px;">
+                <div class="table-card">
+                    <div class="table-card-header">
+                        <div class="table-card-title" id="pdfPreviewTitle">ตัวอย่างแบบฟอร์ม</div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-primary" id="pdfDownloadBtn" onclick="downloadCurrentPDF()">📥 ดาวน์โหลด PDF</button>
+                            <button class="btn btn-ghost" onclick="printCurrentPDF()">🖨️ พิมพ์</button>
+                            <button class="btn btn-ghost" onclick="document.getElementById('pdfPreviewArea').style.display='none'">✕ ปิด</button>
+                        </div>
+                    </div>
+                    <div id="pdfPreviewContent" style="padding:0;background:#64748b;overflow:auto;max-height:80vh;">
+                        <!-- PDF preview rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SETTINGS ══════════════ -->
+        <div id="settings" class="content-section">
+            <div class="page-header">
+                <h2>ตั้งค่า / Settings</h2>
+                <p>กำหนดค่าข้อมูลบริษัท โลโก้ และการตั้งค่าระบบ</p>
+            </div>
+
+            <!-- Company Profile -->
+            <div class="table-card">
+                <div class="table-card-header"><div class="table-card-title">🏢 ข้อมูลบริษัท / Company Profile</div></div>
+                <div style="padding:24px;">
+                    <div class="info-banner">
+                        <strong>📋 ข้อมูลนี้จะแสดงในเอกสาร PR, PO และรายงานทั้งหมด</strong>
+                        <p>กรอกข้อมูลให้ครบถ้วนเพื่อใช้ในการ Export เอกสาร PDF</p>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">🖼️ โลโก้บริษัท</div>
+                        <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+                            <div id="logoPreviewBox" style="width:140px;height:140px;border:2px dashed var(--border);border-radius:var(--radius-md);display:grid;place-items:center;overflow:hidden;background:#fafbfc;flex-shrink:0;cursor:pointer;position:relative;transition:all 0.2s;" onclick="document.getElementById('logoInput').click()">
+                                <div id="logoPlaceholder" style="text-align:center;">
+                                    <div style="font-size:40px;">🖼️</div>
+                                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">คลิกเพื่ออัปโหลด</div>
+                                </div>
+                                <img id="logoImg" src="" style="display:none;width:100%;height:100%;object-fit:contain;">
+                            </div>
+                            <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)">
+                            <div style="flex:1;min-width:200px;">
+                                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">
+                                    อัปโหลดโลโก้บริษัท สำหรับแสดงในเอกสาร PR/PO<br>
+                                    รองรับ: JPG, PNG, SVG | ขนาดแนะนำ: 200×200px
+                                </p>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;" onclick="document.getElementById('logoInput').click()">📁 เลือกไฟล์</button>
+                                    <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px;" onclick="removeLogo()">🗑️ ลบโลโก้</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">📝 ข้อมูลบริษัท</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>ชื่อบริษัท (ไทย) <span class="req">*</span></label><input type="text" id="compNameTh" value="บริษัท ตัวอย่าง จำกัด" onchange="saveCompanySettings()"></div>
+                            <div class="form-group"><label>ชื่อบริษัท (อังกฤษ)</label><input type="text" id="compNameEn" value="EXAMPLE COMPANY LIMITED" onchange="saveCompanySettings()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>เลขประจำตัวผู้เสียภาษี <span class="req">*</span></label><input type="text" id="compTaxId" value="0-1234-56789-01-2" onchange="saveCompanySettings()"></div>
+                            <div class="form-group"><label>สาขา</label><input type="text" id="compBranch" value="สำนักงานใหญ่" onchange="saveCompanySettings()"></div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">📍 ที่อยู่</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>ที่อยู่ (บรรทัด 1) <span class="req">*</span></label><input type="text" id="compAddr1" value="123 ถนนพระราม 4 แขวงสีลม เขตบางรัก" onchange="saveCompanySettings()"></div>
+                            <div class="form-group"><label>ที่อยู่ (บรรทัด 2)</label><input type="text" id="compAddr2" value="กรุงเทพมหานคร 10500" onchange="saveCompanySettings()"></div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">📞 ข้อมูลติดต่อ</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>โทรศัพท์</label><input type="tel" id="compPhone" value="02-123-4567" onchange="saveCompanySettings()"></div>
+                            <div class="form-group"><label>แฟกซ์</label><input type="tel" id="compFax" value="02-123-4568" onchange="saveCompanySettings()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>อีเมล</label><input type="email" id="compEmail" value="info@example.co.th" onchange="saveCompanySettings()"></div>
+                            <div class="form-group"><label>เว็บไซต์</label><input type="url" id="compWebsite" value="www.example.co.th" onchange="saveCompanySettings()"></div>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="form-section">
+                        <div class="form-section-title">👁️ ตัวอย่างหัวเอกสาร</div>
+                        <div id="headerPreview" style="border:2px solid var(--border);border-radius:var(--radius-sm);padding:20px;background:#fff;">
+                        </div>
+                    </div>
+
+                    <div style="padding-top:20px;border-top:1px solid var(--border);display:flex;gap:10px;">
+                        <button class="btn btn-primary" onclick="saveCompanySettings();toast('✅ บันทึกข้อมูลบริษัทสำเร็จ!')">💾 บันทึกข้อมูลบริษัท</button>
+                        <button class="btn btn-ghost" onclick="updateHeaderPreview()">👁️ ดูตัวอย่าง</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="table-card" style="margin-top:24px;">
+                <div class="table-card-header"><div class="table-card-title">🔔 การแจ้งเตือน</div></div>
+                <div style="padding:24px;">
+                    <div class="form-row">
+                        <div class="form-group"><label class="check-label"><input type="checkbox" checked>แจ้งเตือนเมื่อมี PR ใหม่</label></div>
+                        <div class="form-group"><label class="check-label"><input type="checkbox" checked>แจ้งเตือนเมื่อ PR ได้รับการอนุมัติ</label></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="check-label"><input type="checkbox" checked>แจ้งเตือนเมื่อ PO ครบกำหนด</label></div>
+                        <div class="form-group"><label class="check-label"><input type="checkbox" checked>แจ้งเตือนเมื่อรับสินค้า</label></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="check-label"><input type="checkbox">ส่งรายงานสรุปรายสัปดาห์</label></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget settings -->
+            <div class="table-card" style="margin-top:24px;">
+                <div class="table-card-header"><div class="table-card-title">💵 การตั้งค่างบประมาณ</div></div>
+                <div style="padding:24px;">
+                    <div class="form-row">
+                        <div class="form-group"><label>งบประมาณประจำปี (บาท)</label><input type="number" value="50000000"></div>
+                        <div class="form-group"><label>ขีดจำกัดอนุมัติอัตโนมัติ (บาท)</label><input type="number" value="50000"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>อัตราภาษีมูลค่าเพิ่ม (%)</label><input type="number" value="7" min="0" max="100"></div>
+                        <div class="form-group"><label>หน่วยเงิน</label><select><option>THB (บาท)</option><option>USD</option><option>EUR</option></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Integration -->
+            <div class="table-card" style="margin-top:24px;">
+                <div class="table-card-header"><div class="table-card-title">☁️ เชื่อมต่อ Google Sheets + Drive</div></div>
+                <div style="padding:24px;">
+                    <div class="info-banner" id="gasStatusBanner" style="background:#fee2e2;border-color:#ef4444;">
+                        <strong id="gasStatusText">🔴 ยังไม่ได้เชื่อมต่อ — ข้อมูลจะเก็บใน Browser เท่านั้น</strong>
+                        <p id="gasStatusSub">วาง URL ของ Google Apps Script Web App แล้วกดเชื่อมต่อ</p>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">🔗 Google Apps Script Web App URL</div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:3;"><label>URL <span class="req">*</span></label><input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/xxxxx/exec" value=""></div>
+                            <div class="form-group" style="flex:1;align-self:flex-end;"><button class="btn btn-primary" onclick="connectGAS()" id="gasConnectBtn" style="width:100%;">🔗 เชื่อมต่อ</button></div>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.7;">
+                            📋 วิธี Setup: สร้าง Google Sheets → Extensions → Apps Script → วางโค้ดจากไฟล์ <code>google-apps-script.js</code> → Deploy → Web App → Copy URL มาวางที่นี่
+                        </div>
+                    </div>
+                    <div id="gasConnectedInfo" style="display:none;margin-top:16px;">
+                        <div class="stats-row" style="margin:0;">
+                            <div class="stat-card approved" style="margin:0;">
+                                <div class="stat-top"><div class="stat-label">สถานะ</div><div class="stat-icon">☁️</div></div>
+                                <div class="stat-value" style="font-size:16px;">เชื่อมต่อแล้ว</div>
+                                <div class="stat-sub" id="gasLastSync">-</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px;display:flex;gap:8px;">
+                            <button class="btn btn-primary" style="font-size:12px;padding:8px 14px;" onclick="syncAllToSheets()">📤 ส่งข้อมูล → Sheets</button>
+                            <button class="btn btn-primary" style="font-size:12px;padding:8px 14px;background:var(--success);" onclick="loadFromSheets()">📥 ดึงข้อมูล ← Sheets</button>
+                            <button class="btn btn-ghost" style="font-size:12px;padding:8px 14px;" onclick="fullSync()">🔄 Sync ทั้งหมด (ส่ง+รับ)</button>
+                            <button class="btn btn-ghost" style="font-size:12px;padding:8px 14px;" onclick="testGASConnection()">🔄 ทดสอบการเชื่อมต่อ</button>
+                            <button class="btn btn-ghost" style="font-size:12px;padding:8px 14px;color:var(--danger);" onclick="disconnectGAS()">🔌 ยกเลิกการเชื่อมต่อ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══════════════ PR DETAIL MODAL ══════════════ -->
+<div id="prDetailModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:960px;">
+        <div class="modal-top">
+            <h3 id="prDetailTitle">รายละเอียด PR</h3>
+            <button class="modal-close" onclick="closeModal('prDetailModal')">×</button>
+        </div>
+        <div class="modal-body" id="prDetailBody"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('prDetailModal')">ปิด</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ PR FORM MODAL ══════════════ -->
+<div id="prModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:1180px;">
+        <div class="modal-top">
+            <h3>📝 สร้าง Purchase Request</h3>
+            <button class="modal-close" onclick="closeModal('prModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="info-banner">
+                <strong>📋 เลขที่ PR จะถูกสร้างอัตโนมัติ</strong>
+                <p>รูปแบบ PR-YYMM-XXX เช่น PR-2502-001</p>
+            </div>
+            <form id="prForm">
+                <!-- ข้อมูลทั่วไป -->
+                <div class="form-section">
+                    <div class="form-section-title">📌 ข้อมูลทั่วไป</div>
+                    
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>หัวข้อ / รายละเอียดการขอซื้อ <span class="req">*</span></label>
+                        <input type="text" name="title" placeholder="เช่น จัดซื้อเหล็กเส้น SD40 ไซต์งาน A" required style="font-size:15px;padding:12px 16px;">
+                    </div>
+
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group">
+                            <label>ผู้ขอ <span class="req">*</span></label>
+                            <input type="text" name="requester" placeholder="ชื่อ-นามสกุล" required>
+                        </div>
+                        <div class="form-group">
+                            <label>แผนก <span class="req">*</span></label>
+                            <select name="department" id="prDeptSelect" required>
+                                <option value="">-- เลือกแผนก --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group">
+                            <label>วันที่ต้องการ <span class="req">*</span></label>
+                            <input type="date" name="required_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ความสำคัญ</label>
+                            <select name="priority">
+                                <option value="">-- เลือก --</option>
+                                <option value="high">🔴 สูง — ด่วนมาก</option>
+                                <option value="medium">🟡 ปานกลาง</option>
+                                <option value="low">🟢 ต่ำ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <label>โครงการ (ใช้งบจากโครงการ) <span class="req">*</span></label>
+                        <select name="project_id" id="prProjectSelect" onchange="onPRProjectSelect()">
+                            <option value="">-- เลือกโครงการ --</option>
+                        </select>
+                    </div>
+                    <div id="prProjectBudgetInfo" style="display:none;background:var(--accent-light);border:1px solid #c7d2fe;border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:8px;font-size:13px;"></div>
+                </div>
+
+                <!-- รายการสินค้า -->
+                <div class="form-section">
+                    <div class="form-section-title">🛒 รายการสินค้า / บริการ</div>
+                    <div class="items-wrap">
+                        <table>
+                            <thead><tr><th style="width:44px;">#</th><th style="min-width:320px;">รายการ</th><th style="width:130px;min-width:130px;">จำนวน</th><th style="width:120px;min-width:120px;">หน่วย</th><th style="width:160px;min-width:160px;">ราคา/หน่วย</th><th style="width:160px;min-width:160px;">รวม</th><th style="width:46px;"></th></tr></thead>
+                            <tbody id="prItemsBody">
+                                <tr>
+                                    <td>1</td>
+                                    <td><input type="text" placeholder="ระบุรายการ..." class="item-desc"></td>
+                                    <td><input type="number" value="1" min="1" class="item-qty" onchange="calcPR(this)"></td>
+                                    <td><input type="text" placeholder="ชิ้น" class="item-unit"></td>
+                                    <td><input type="number" value="0" min="0" step="0.01" class="item-price" onchange="calcPR(this)"></td>
+                                    <td><input type="number" value="0" readonly class="item-total"></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                            <tfoot><tr><td colspan="5" style="text-align:right;font-weight:700;">รวมทั้งหมด:</td><td id="prGrandTotal" style="font-family:var(--font-mono);font-size:16px;color:var(--accent);font-weight:800;">฿0.00</td><td></td></tr></tfoot>
+                        </table>
+                    </div>
+                    <button type="button" class="btn-add-row" onclick="addPRRow()">+ เพิ่มรายการ</button>
+                </div>
+
+                <!-- เหตุผล -->
+                <div class="form-section">
+                    <div class="form-section-title">💬 เหตุผลความจำเป็น</div>
+                    <div class="form-group">
+                        <label>เหตุผลในการขอซื้อ <span class="req">*</span></label>
+                        <textarea name="reason" placeholder="โปรดระบุเหตุผลและความจำเป็น..." required rows="3"></textarea>
+                    </div>
+                </div>
+
+                <!-- แนบไฟล์ -->
+                <div class="form-section">
+                    <div class="form-section-title">📎 แนบไฟล์ / รูปภาพ</div>
+                    <label class="file-drop" id="prFileDrop">
+                        <input type="file" id="prFileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.heic,.dwg,.dxf" onchange="handlePRFiles(this)">
+                        <div class="file-drop-icon">📁</div>
+                        <div class="file-drop-text"><strong>คลิกเพื่ออัปโหลด</strong> หรือลากไฟล์มาวาง<br><small>รูปภาพ (JPG/PNG), PDF, Word, Excel, แบบ CAD (สูงสุด 10 MB/ไฟล์)</small></div>
+                    </label>
+                    <div id="prFilePreview" style="display:none;margin-top:12px;">
+                        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📋 ไฟล์ที่แนบ (<span id="prFileCount">0</span> ไฟล์)</div>
+                        <div id="prFileList" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('prModal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitPR()">💾 บันทึก PR</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ PO FORM MODAL ══════════════ -->
+<div id="poModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:1000px;">
+        <div class="modal-top">
+            <h3>📋 สร้าง Purchase Order จาก PR ที่อนุมัติแล้ว</h3>
+            <button class="modal-close" onclick="closeModal('poModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="info-banner">
+                <strong>📋 สร้าง PO ได้เฉพาะ PR ที่อนุมัติครบทุกลำดับแล้ว</strong>
+                <p>เลือก PR → เลือกรายการ → ผู้ขายเลือกได้ หรือไม่เลือกก็ได้ → ระบบสร้าง PO ให้</p>
+            </div>
+
+            <!-- Step 1: Select PR -->
+            <div class="form-section">
+                <div class="form-section-title">📌 ขั้นตอนที่ 1 — เลือก PR ที่อนุมัติแล้ว</div>
+                <div id="approvedPRList"></div>
+                <div id="noPRMsg" style="display:none;padding:20px;text-align:center;color:var(--text-muted);font-size:14px;">
+                    ⚠️ ไม่มี PR ที่อนุมัติครบทุกลำดับ — กรุณาอนุมัติ PR ให้ครบก่อนสร้าง PO
+                </div>
+            </div>
+
+            <!-- Step 2: Split items to vendors -->
+            <div id="poStep2" style="display:none;">
+                <div class="form-section">
+                    <div class="form-section-title">🛒 ขั้นตอนที่ 2 — เลือกรายการและร้านค้า <span id="poSelectedPR" style="color:var(--accent);"></span></div>
+                    <div class="info-banner" style="background:#fffbeb;border-color:#fbbf24;">
+                        <strong>💡 แยก PO ตามร้านค้า</strong>
+                        <p>เลือกผู้ขายสำหรับแต่ละรายการ หรือปล่อยว่างไว้ได้ — ถ้าไม่เลือก ระบบจะสร้าง PO เป็น “ยังไม่ระบุผู้ขาย”</p>
+                    </div>
+                    <div id="poItemAssignArea"></div>
+                </div>
+
+                <!-- Summary by vendor -->
+                <div class="form-section" id="poVendorSummarySection" style="display:none;">
+                    <div class="form-section-title">📊 สรุป PO ที่จะสร้าง (แยกตามร้านค้า)</div>
+                    <div id="poVendorSummary"></div>
+                </div>
+
+                <!-- Terms -->
+                <div class="form-section">
+                    <div class="form-section-title">💳 ขั้นตอนที่ 3 — เงื่อนไข (ใช้ร่วมทุก PO)</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เงื่อนไขชำระเงิน</label><select id="poPayTerms"><option value="เครดิต 30 วัน" selected>เครดิต 30 วัน</option><option>เงินสด</option><option>เครดิต 7 วัน</option><option>เครดิต 15 วัน</option><option>เครดิต 60 วัน</option></select></div>
+                        <div class="form-group"><label>กำหนดส่งมอบ <span class="req">*</span></label><input type="date" id="poDeliveryDate"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>สถานที่ส่งมอบ</label><input type="text" id="poDeliveryLoc" placeholder="เช่น อาคาร A ชั้น 2"></div>
+                        <div class="form-group"><label>หมายเหตุ</label><input type="text" id="poNotes" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('poModal')">ยกเลิก</button>
+            <button class="btn btn-primary" id="poSubmitBtn" onclick="submitNewPO()" disabled>💾 สร้าง PO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ PROJECT MODAL ══════════════ -->
+<div id="projectModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:800px;">
+        <div class="modal-top"><h3>🚧 เพิ่มโครงการก่อสร้างใหม่</h3><button class="modal-close" onclick="closeModal('projectModal')">×</button></div>
+        <div class="modal-body">
+            <div class="info-banner">
+                <strong>📋 ข้อมูลโครงการจะเชื่อมกับแผนกอัตโนมัติ</strong>
+                <p>เลือกแผนกรับผิดชอบ → ระบบจะดึงหัวหน้าแผนกมาเป็นผู้จัดการโครงการให้</p>
+            </div>
+            <form id="projectForm">
+                <div class="form-section">
+                    <div class="form-section-title">📌 ข้อมูลโครงการ</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อโครงการ <span class="req">*</span></label><input type="text" id="projName" required placeholder="เช่น ก่อสร้างอาคาร C"></div>
+                        <div class="form-group"><label>ประเภทโครงการ <span class="req">*</span></label>
+                            <select id="projType" required>
+                                <option value="">-- เลือก --</option>
+                                <option value="building">🏢 งานอาคาร</option>
+                                <option value="civil">🛤️ งานโยธา / ถนน</option>
+                                <option value="renovation">🔧 งานปรับปรุง / ซ่อมแซม</option>
+                                <option value="mep">⚡ งานระบบ MEP</option>
+                                <option value="other">📋 อื่นๆ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>สถานที่ / ไซต์งาน <span class="req">*</span></label><input type="text" id="projLocation" required placeholder="เช่น ไซต์ C ถ.พระราม 2"></div>
+                        <div class="form-group"><label>เจ้าของโครงการ / ลูกค้า</label><input type="text" id="projClient" placeholder="เช่น บริษัท ABC พัฒนา จำกัด"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">🏗️ แผนกรับผิดชอบ (เชื่อมจากข้อมูลแผนก)</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>แผนกหลัก <span class="req">*</span></label><select id="projDept" required onchange="onProjDeptChange()"><option value="">-- เลือกแผนก --</option></select></div>
+                        <div class="form-group"><label>ผู้จัดการโครงการ</label><input type="text" id="projManager" readonly style="background:#fafbfc;"></div>
+                    </div>
+                    <div id="projDeptInfo" style="display:none;background:var(--accent-light);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;">
+                        <div style="font-size:12px;color:var(--text-secondary);" id="projDeptDetail"></div>
+                    </div>
+                    <div class="form-group"><label>แผนกสนับสนุน (เลือกได้หลายแผนก)</label>
+                        <div id="projSupportDepts" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">💰 งบประมาณและระยะเวลา</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>งบประมาณ (บาท) <span class="req">*</span></label><input type="number" id="projBudget" min="0" required placeholder="0.00"></div>
+                        <div class="form-group"><label>มูลค่าสัญญา (บาท)</label><input type="number" id="projContract" min="0" placeholder="0.00"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>วันที่เริ่ม <span class="req">*</span></label><input type="date" id="projStart" required></div>
+                        <div class="form-group"><label>วันที่สิ้นสุด <span class="req">*</span></label><input type="date" id="projEnd" required></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">📝 รายละเอียด</div>
+                    <div class="form-group"><label>ขอบเขตงาน</label><textarea id="projScope" rows="3" placeholder="เช่น ก่อสร้างอาคาร 5 ชั้น พร้อมระบบ MEP..."></textarea></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>สถานะ</label><select id="projStatus"><option value="planning">📋 วางแผน</option><option value="active" selected>🚧 กำลังดำเนินการ</option><option value="onhold">⏸️ ระงับชั่วคราว</option><option value="completed">✅ เสร็จสิ้น</option></select></div>
+                        <div class="form-group"><label>ความสำคัญ</label><select id="projPriority"><option value="high">🔴 สูง</option><option value="medium" selected>🟡 ปานกลาง</option><option value="low">🟢 ต่ำ</option></select></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('projectModal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitProject()">💾 บันทึกโครงการ</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ BUDGET MODAL ══════════════ -->
+<div id="budgetModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:700px;">
+        <div class="modal-top"><h3>💰 จัดสรรงบประมาณ</h3><button class="modal-close" onclick="closeModal('budgetModal')">×</button></div>
+        <div class="modal-body">
+            <form id="budgetForm">
+                <div class="form-section">
+                    <div class="form-section-title">💵 จัดสรรงบประมาณ</div>
+                    <div class="form-row"><div class="form-group"><label>แผนก <span class="req">*</span></label><select name="department" id="budgetDeptSelect" required><option value="">-- เลือก --</option></select></div><div class="form-group"><label>งบประมาณ (บาท) <span class="req">*</span></label><input type="number" name="amount" min="0" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>ปีงบประมาณ</label><select><option>2568</option><option>2569</option></select></div><div class="form-group"><label>ประเภท</label><select><option>OPEX — ค่าใช้จ่ายดำเนินงาน</option><option>CAPEX — ค่าใช้จ่ายลงทุน</option></select></div></div>
+                    <div class="form-group"><label>หมายเหตุ</label><textarea rows="2" placeholder="ระบุหมายเหตุ (ถ้ามี)..."></textarea></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('budgetModal')">ยกเลิก</button><button class="btn btn-primary" onclick="toast('✅ จัดสรรงบประมาณสำเร็จ!');closeModal('budgetModal')">💾 บันทึก</button></div>
+    </div>
+</div>
+
+<!-- ══════════════ VENDOR MODAL ══════════════ -->
+<div id="vendorModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-top"><h3>🏢 เพิ่ม/แก้ไขผู้ขาย</h3><button class="modal-close" onclick="closeModal('vendorModal')">×</button></div>
+        <div class="modal-body">
+            <div class="info-banner">
+                <strong>📋 ข้อมูลผู้ขาย</strong>
+                <p>กรอกข้อมูลบริษัทผู้ขาย ระบบจะสร้างรหัสอัตโนมัติ</p>
+            </div>
+            <form id="vendorForm">
+                <div class="form-section">
+                    <div class="form-section-title">📌 ข้อมูลบริษัท</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อบริษัท <span class="req">*</span></label><input type="text" name="company_name" placeholder="เช่น บริษัท ABC จำกัด" required></div>
+                        <div class="form-group"><label>ประเภทกิจการ</label><select name="vendor_type"><option value="">-- เลือก --</option><option>บริษัทจำกัด (บจก.)</option><option>บริษัทมหาชนจำกัด (บมจ.)</option><option>ห้างหุ้นส่วนจำกัด (หจก.)</option><option>ร้านค้า</option><option>บุคคลธรรมดา</option></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เลขประจำตัวผู้เสียภาษี <span class="req">*</span></label><input type="text" name="tax_id" placeholder="0-0000-00000-00-0" required></div>
+                        <div class="form-group"><label>ประเภทสินค้า/บริการ</label><select name="category"><option value="">-- เลือก --</option><option>วัสดุสำนักงาน</option><option>เทคโนโลยี/IT</option><option>ซ่อมบำรุง</option><option>ก่อสร้าง</option><option>โฆษณา/การตลาด</option><option>อื่นๆ</option></select></div>
+                    </div>
+                    <div class="form-group"><label>ที่อยู่ <span class="req">*</span></label><textarea name="address" placeholder="ที่อยู่เต็มรวมจังหวัดและรหัสไปรษณีย์" rows="2" required></textarea></div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">👤 ผู้ติดต่อ</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อผู้ติดต่อ <span class="req">*</span></label><input type="text" name="contact_name" required></div>
+                        <div class="form-group"><label>ตำแหน่ง</label><input type="text" name="contact_position" placeholder="เช่น ผู้จัดการฝ่ายขาย"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เบอร์โทร <span class="req">*</span></label><input type="tel" name="phone" required></div>
+                        <div class="form-group"><label>อีเมล</label><input type="email" name="email" placeholder="contact@company.com"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>LINE ID</label><input type="text" name="line_id"></div>
+                        <div class="form-group"><label>เว็บไซต์</label><input type="url" name="website" placeholder="https://"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">💳 เงื่อนไข</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เงื่อนไขชำระเงิน</label><select name="payment_terms"><option>เครดิต 30 วัน</option><option>เครดิต 15 วัน</option><option>เครดิต 7 วัน</option><option>เงินสด</option><option>เครดิต 45 วัน</option><option>เครดิต 60 วัน</option></select></div>
+                        <div class="form-group"><label>วงเงินเครดิต (บาท)</label><input type="number" name="credit_limit" min="0" placeholder="0.00"></div>
+                    </div>
+                    <div class="form-group"><label>หมายเหตุ</label><textarea name="notes" rows="2" placeholder="บันทึกเพิ่มเติม..."></textarea></div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">📎 เอกสาร</div>
+                    <label class="file-drop">
+                        <input type="file" multiple>
+                        <div class="file-drop-icon">📁</div>
+                        <div class="file-drop-text"><strong>อัปโหลดเอกสาร</strong><br><small>หนังสือรับรองบริษัท, ภ.พ.20, สำเนาบัตร ฯลฯ</small></div>
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('vendorModal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitVendor()">💾 บันทึกผู้ขาย</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ VENDOR DETAIL MODAL ══════════════ -->
+<div id="vendorDetailModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:960px;">
+        <div class="modal-top"><h3 id="vendorDetailTitle">รายละเอียดผู้ขาย</h3><button class="modal-close" onclick="closeModal('vendorDetailModal')">×</button></div>
+        <div class="modal-body" id="vendorDetailBody"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('vendorDetailModal')">ปิด</button></div>
+    </div>
+</div>
+
+<!-- ══════════════ DEPARTMENT MODAL ══════════════ -->
+<div id="deptModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:760px;">
+        <div class="modal-top"><h3>🏗️ เพิ่ม/แก้ไขแผนก</h3><button class="modal-close" onclick="closeModal('deptModal')">×</button></div>
+        <div class="modal-body">
+            <form id="deptForm">
+                <div class="form-section">
+                    <div class="form-section-title">📌 ข้อมูลแผนก</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อแผนก (ไทย) <span class="req">*</span></label><input type="text" name="dept_name_th" placeholder="เช่น ฝ่ายจัดซื้อ" required></div>
+                        <div class="form-group"><label>ชื่อแผนก (อังกฤษ)</label><input type="text" name="dept_name_en" placeholder="e.g. Procurement"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>รหัสแผนก <span class="req">*</span></label><input type="text" name="dept_code" placeholder="เช่น PROC, ENG, SITE" required style="text-transform:uppercase;"></div>
+                        <div class="form-group"><label>ประเภทแผนก</label><select name="dept_type">
+                            <option value="">-- เลือก --</option>
+                            <option value="engineering">🏗️ วิศวกรรม / Engineering</option>
+                            <option value="construction">🚧 ก่อสร้าง / Construction</option>
+                            <option value="design">📐 ออกแบบ / Design</option>
+                            <option value="management">🏢 บริหาร / Management</option>
+                            <option value="procurement">🛒 จัดซื้อ / Procurement</option>
+                            <option value="safety">🦺 ความปลอดภัย / Safety</option>
+                            <option value="support">👥 สนับสนุน / Support</option>
+                        </select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>สังกัด / แผนกระดับบน</label><select name="parent_dept">
+                            <option value="">— ไม่มี (แผนกหลัก) —</option>
+                            <option>ฝ่ายวิศวกรรม</option>
+                            <option>ฝ่ายก่อสร้าง</option>
+                            <option>ฝ่ายจัดซื้อจัดจ้าง</option>
+                            <option>ฝ่ายบริหาร</option>
+                        </select></div>
+                        <div class="form-group"><label>Cost Center</label><input type="text" name="cost_center" placeholder="เช่น CC-PROC-001"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>อีเมลแผนก</label><input type="email" name="dept_email" placeholder="procurement@company.co.th"></div>
+                        <div class="form-group"><label>สถานะ</label><select name="status"><option value="active">ใช้งาน</option><option value="inactive">ปิดใช้งาน</option></select></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('deptModal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitDept()">💾 บันทึกแผนก</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ DEPT DETAIL MODAL ══════════════ -->
+<div id="deptDetailModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:960px;">
+        <div class="modal-top"><h3 id="deptDetailTitle">รายละเอียดแผนก</h3><button class="modal-close" onclick="closeModal('deptDetailModal')">×</button></div>
+        <div class="modal-body" id="deptDetailBody"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('deptDetailModal')">ปิด</button></div>
+    </div>
+</div>
+
+<!-- ══════════════ USER MODAL ══════════════ -->
+<div id="userModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:720px;">
+        <div class="modal-top"><h3 id="userModalTitle">👤 เพิ่มผู้ใช้งานใหม่</h3><button class="modal-close" onclick="closeModal('userModal')">×</button></div>
+        <div class="modal-body">
+            <form id="userForm">
+                <div class="form-section">
+                    <div class="form-section-title">📌 ข้อมูลส่วนตัว</div>
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" name="fullname" required placeholder="เช่น สมชาย ใจดี"></div>
+                        <div class="form-group"><label>ชื่อย่อ (2 ตัว) <span class="req">*</span></label><input type="text" name="initials" maxlength="4" required placeholder="เช่น สจ"></div>
+                    </div>
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group"><label>แผนก <span class="req">*</span></label><select name="department" id="userDeptSelect" required><option value="">-- เลือก --</option></select></div>
+                        <div class="form-group"><label>ตำแหน่ง <span class="req">*</span></label><input type="text" name="position" required placeholder="เช่น วิศวกร, โฟร์แมน"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">🔑 บัญชีเข้าสู่ระบบ</div>
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group"><label>Username <span class="req">*</span></label><input type="text" name="username" required placeholder="ตัวอักษรภาษาอังกฤษ"></div>
+                        <div class="form-group"><label>Password <span class="req">*</span></label><input type="text" name="password" required placeholder="รหัสผ่าน" value="1234"></div>
+                    </div>
+                    <div class="form-row" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group"><label>บทบาทในระบบ <span class="req">*</span></label><select name="role" required onchange="onRoleChange()">
+                            <option value="">-- เลือก --</option>
+                            <option value="admin">👔 Admin — MD / จัดการทั้งหมด</option>
+                            <option value="manager">👨‍💼 Manager — หัวหน้างาน</option>
+                            <option value="foreman">🔨 Foreman (FM) — โฟร์แมน / หัวหน้าช่าง</option>
+                            <option value="procurement">🛒 Procurement — จัดซื้อ</option>
+                            <option value="engineer">👷 Engineer — วิศวกร / ช่าง</option>
+                            <option value="safety">🦺 Safety — จป.</option>
+                            <option value="qs">📐 QS — ประมาณราคา</option>
+                            <option value="admin_hr">🏢 HR — ธุรการ</option>
+                            <option value="finance">💰 Finance — บัญชี</option>
+                            <option value="user">👤 User — ผู้ใช้งานทั่วไป</option>
+                        </select></div>
+                        <div class="form-group"><label>สีประจำตัว</label><input type="color" name="color" value="#8b5cf6" style="height:40px;"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title">🔒 สิทธิ์เข้าถึงหน้าจอ</div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">เลือกหน้าจอที่ผู้ใช้สามารถเข้าถึงได้ (Admin ได้ทั้งหมดอัตโนมัติ)</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="permCheckboxes">
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_dashboard" checked style="accent-color:var(--accent);width:16px;height:16px;">📊 Dashboard</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_pr" checked style="accent-color:var(--accent);width:16px;height:16px;">📝 สร้าง PR</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_po" style="accent-color:var(--accent);width:16px;height:16px;">📋 Purchase Order</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_compare" style="accent-color:var(--accent);width:16px;height:16px;">⚖️ เปรียบเทียบราคา</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_grn" style="accent-color:var(--accent);width:16px;height:16px;">📦 รับสินค้า</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_approve" style="accent-color:var(--accent);width:16px;height:16px;">✅ อนุมัติ PR</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_payment" style="accent-color:var(--accent);width:16px;height:16px;">💳 จ่ายเงิน</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_reports" style="accent-color:var(--accent);width:16px;height:16px;">📈 รายงาน / PDF</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_projects" style="accent-color:var(--accent);width:16px;height:16px;">📂 โครงการ</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_budget" style="accent-color:var(--accent);width:16px;height:16px;">💰 งบประมาณ</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_vendors" style="accent-color:var(--accent);width:16px;height:16px;">🏢 ผู้ขาย</label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><input type="checkbox" name="perm_settings" style="accent-color:var(--accent);width:16px;height:16px;">⚙️ ตั้งค่าระบบ</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('userModal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitUser()">💾 บันทึกผู้ใช้</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ USER DETAIL MODAL ══════════════ -->
+<div id="userDetailModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:960px;">
+        <div class="modal-top"><h3 id="userDetailTitle">รายละเอียดผู้ใช้</h3><button class="modal-close" onclick="closeModal('userDetailModal')">×</button></div>
+        <div class="modal-body" id="userDetailBody"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('userDetailModal')">ปิด</button></div>
+    </div>
+</div>
+
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
