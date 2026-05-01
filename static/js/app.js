@@ -23,6 +23,7 @@ function go(section) {
     if (el) el.classList.add('active');
     document.getElementById('topbarTitle').textContent = sectionNames[section] || 'Dashboard';
     window.scrollTo({top:0, behavior:'smooth'});
+    if (section === 'po') loadPOsFromDB();
 }
 
 // ─── Modal ───
@@ -487,7 +488,7 @@ function updateVendorSummary() {
 
 function checkPOReady() { updateVendorSummary(); }
 
-function submitNewPO() {
+async function submitNewPO() {
     if (!selectedPRForPO) return toast('⚠️ กรุณาเลือก PR');
     const deliveryDate = document.getElementById('poDeliveryDate').value;
     if (!deliveryDate) return toast('⚠️ กรุณาระบุกำหนดส่งมอบ');
@@ -524,6 +525,10 @@ function submitNewPO() {
         const total = items.reduce((s,it) => s + it.total, 0);
         const poNum = `PO-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}-${String(Object.keys(poDatabase).length + 100)}`;
         
+        const vendorId = (!isNoVendor && vId) ? parseInt(vId) : null;
+        const payTerms = document.getElementById('poPayTerms').value || 'เครดิต 30 วัน';
+        const deliveryLoc = document.getElementById('poDeliveryLoc').value || '-';
+
         poDatabase[poNum] = {
             prRef: selectedPRForPO,
             vendor: vendor.name,
@@ -534,8 +539,8 @@ function submitNewPO() {
             vendorEmail: vendor.email,
             date: dateStr,
             deliveryDate: ddStr,
-            payTerms: document.getElementById('poPayTerms').value || 'เครดิต 30 วัน',
-            deliveryLoc: document.getElementById('poDeliveryLoc').value || '-',
+            payTerms,
+            deliveryLoc,
             total: total,
             statusText: 'รออนุมัติ',
             statusCls: 'pending',
@@ -544,13 +549,41 @@ function submitNewPO() {
                 {status:'current'},{status:'waiting'},{status:'waiting'}
             ]
         };
+
+        // บันทึกลง Database ทันที (ยังอยู่ใน loop ที่มี vId)
+        try {
+            const res = await fetch('/api/purchase-orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    po_no:          poNum,
+                    pr_id:          null,
+                    vendor_id:      vendorId,
+                    total_amount:   total,
+                    status:         'Draft',
+                    payment_status: 'Unpaid',
+                    due_date:       deliveryDate,
+                    notes:          `อ้างอิง ${selectedPRForPO}`
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                poDatabase[poNum].dbId = result.po_id;
+            } else {
+                toast(`⚠️ บันทึก ${poNum} ลง DB ไม่สำเร็จ: ${result.message}`);
+            }
+        } catch (e) {
+            toast(`❌ เชื่อมต่อ Server ไม่ได้ — ${poNum} บันทึกแค่ใน Browser`);
+            console.error('POST PO failed:', e);
+        }
+
         createdPOs.push({ poNum, vendor: vendor.name, total });
     }
-    
+
     closeModal('poModal');
     renderPOTable();
     if (typeof renderExportTables === 'function') renderExportTables();
-    
+
     // Sync POs to Google Sheets + auto-save PDF
     createdPOs.forEach(p => {
         const po = poDatabase[p.poNum];
@@ -596,6 +629,11 @@ function renderPOTable() {
             payBtn = `<button class="btn btn-primary" onclick="openPaymentModal('${num}')" style="padding:4px 12px;font-size:11px;">💳 จ่ายเงิน</button>`;
         }
         
+        const isPending   = po.statusCls === 'pending' || po.statusText === 'รออนุมัติ';
+        const approveBtn  = isPending && po.dbId
+            ? `<button class="act-btn edit" onclick="approvePO('${num}')" style="background:#16a34a;color:#fff;border-color:#16a34a;">✓ อนุมัติ</button>`
+            : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="cell-id">${num}</td>
@@ -606,6 +644,7 @@ function renderPOTable() {
             <td><span class="badge ${po.statusCls}">${po.statusText}</span></td>
             <td style="text-align:center;">${payBadge}<div style="margin-top:4px;">${payBtn}</div></td>
             <td class="actions">
+                ${approveBtn}
                 <button class="act-btn view" onclick="viewPODetail('${num}')">ดู</button>
             </td>
         `;
@@ -862,6 +901,66 @@ function viewPODetail(poNum) {
 
 // Initialize PO table
 renderPOTable();
+
+// ─── Load POs from Database ───
+async function loadPOsFromDB() {
+    try {
+        const res = await fetch('/api/purchase-orders');
+        const rows = await res.json();
+        rows.forEach(row => {
+            const statusMap = { 'Confirmed': 'อนุมัติแล้ว', 'Cancelled': 'ยกเลิก', 'Draft': 'รออนุมัติ', 'Sent': 'ส่งแล้ว' };
+            const clsMap   = { 'Confirmed': 'approved',    'Cancelled': 'rejected',  'Draft': 'pending',      'Sent': 'in-progress' };
+            if (!poDatabase[row.po_no]) {
+                poDatabase[row.po_no] = {
+                    dbId:         row.id,
+                    prRef:        row.pr_no || '-',
+                    vendor:       row.company_name || 'ไม่ระบุผู้ขาย',
+                    total:        row.total_amount || 0,
+                    statusText:   statusMap[row.status] || 'รออนุมัติ',
+                    statusCls:    clsMap[row.status]   || 'pending',
+                    deliveryDate: row.due_date || '-',
+                    payTerms:     'เครดิต 30 วัน',
+                    items:        [],
+                    approvals:    [{status:'current'},{status:'waiting'},{status:'waiting'}]
+                };
+            } else {
+                // อัปเดตเฉพาะค่าจาก DB (status, dbId)
+                poDatabase[row.po_no].dbId       = row.id;
+                poDatabase[row.po_no].statusText = statusMap[row.status] || poDatabase[row.po_no].statusText;
+                poDatabase[row.po_no].statusCls  = clsMap[row.status]   || poDatabase[row.po_no].statusCls;
+            }
+        });
+        renderPOTable();
+    } catch (e) {
+        console.error('loadPOsFromDB failed:', e);
+    }
+}
+
+// ─── Approve PO ───
+async function approvePO(poNum) {
+    const po = poDatabase[poNum];
+    if (!po) return toast('❌ ไม่พบ PO');
+    if (!po.dbId) return toast('⚠️ PO นี้ยังไม่ได้บันทึกในระบบ กรุณา Reload');
+    if (!confirm(`ยืนยันอนุมัติ ${poNum}?`)) return;
+    try {
+        const res = await fetch(`/api/purchase-orders/${po.dbId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'approve', approved_by: currentUser?.username || 'admin' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            po.statusText = 'อนุมัติแล้ว';
+            po.statusCls  = 'approved';
+            renderPOTable();
+            toast(`✅ อนุมัติ ${poNum} สำเร็จ`);
+        } else {
+            toast('❌ ' + data.message);
+        }
+    } catch (e) {
+        toast('❌ เกิดข้อผิดพลาด: ' + e.message);
+    }
+}
 
 // ─── PR Detail ───
 // ═══════════════════════════════════════
@@ -4544,7 +4643,8 @@ async function loadMasterDataFromDB() {
         await Promise.all([
             loadProjectsFromDB(),
             loadVendorsFromDB(),
-            loadUsersFromDB()
+            loadUsersFromDB(),
+            loadPOsFromDB()
         ]);
         if (typeof renderDashStats === "function") renderDashStats();
         console.log("✅ Master data loaded from SQLite API");

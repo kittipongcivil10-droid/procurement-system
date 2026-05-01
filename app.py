@@ -619,6 +619,46 @@ def api_purchase_orders():
 
 
 # ==============================
+# PURCHASE ORDER — APPROVE / STATUS
+# ==============================
+@app.route("/api/purchase-orders/<int:po_id>", methods=["PATCH"])
+def api_update_po(po_id):
+    data = get_json()
+    action = data.get("action")
+    conn = get_db()
+    try:
+        if action == "approve":
+            conn.execute("""
+                UPDATE purchase_orders
+                SET status = 'Confirmed', approved_by = ?, approved_at = ?, updated_at = ?
+                WHERE id = ?
+            """, (data.get("approved_by", "admin"), now_text(), now_text(), po_id))
+            conn.execute("""
+                INSERT INTO approval_logs (doc_type, doc_id, action, action_by, note, created_at)
+                VALUES ('PO', ?, 'Approved', ?, ?, ?)
+            """, (po_id, data.get("approved_by", "admin"), data.get("note", ""), now_text()))
+        elif action == "reject":
+            conn.execute("""
+                UPDATE purchase_orders
+                SET status = 'Cancelled', updated_at = ?
+                WHERE id = ?
+            """, (now_text(), po_id))
+            conn.execute("""
+                INSERT INTO approval_logs (doc_type, doc_id, action, action_by, note, created_at)
+                VALUES ('PO', ?, 'Rejected', ?, ?, ?)
+            """, (po_id, data.get("approved_by", "admin"), data.get("note", ""), now_text()))
+        else:
+            return jsonify({"success": False, "message": "action ไม่ถูกต้อง"}), 400
+        conn.commit()
+        return jsonify({"success": True, "message": "อัปเดตสถานะ PO สำเร็จ"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 400
+    finally:
+        conn.close()
+
+
+# ==============================
 # GRN API
 # ==============================
 @app.route("/api/grn", methods=["GET", "POST"])
